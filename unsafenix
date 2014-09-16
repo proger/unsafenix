@@ -1,0 +1,27 @@
+#!/bin/sh -e
+
+oldpwd="$PWD"
+me=$(dirname "$0")
+cd "$me"
+me="$PWD"
+cd "$oldpwd"
+
+export NIX_REMOTE=
+export INTERNIX_REMOTE=
+export NIX_CONF_DIR=/var/empty
+export NIX_STORE_DIR=$PWD/store
+export NIX_STATE_DIR=$PWD/state
+export NIX_LOG_DIR=$NIX_STATE_DIR/log
+export NIX_DB_DIR=$NIX_STATE_DIR/db
+
+mkdir -p "$NIX_STORE_DIR"
+mkdir -p "$NIX_DB_DIR"
+
+nix-build -A dummy core.nix
+
+eval printf $(nix-instantiate --eval --strict -E '
+	with import ./lib;
+	concatStringsSep " \n" (mapAttrsToList (k: v: '"''"'export ${k}="${v}"'"''"') (import ./core.nix).env)
+')  > "$NIX_STORE_DIR/unsafe-env"
+
+exec "$@"
