@@ -44,6 +44,7 @@ in rec {
         git init .
         git remote add origin ${url}
         git fetch -tu origin
+        git fetch origin
         git checkout -b fetchgit ${rev}
         git submodule init && git submodule update
       '';
